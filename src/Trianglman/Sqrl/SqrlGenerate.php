@@ -30,65 +30,52 @@ use Endroid\QrCode\QrCode;
  *
  * @author johnj
  */
-class SqrlGenerate extends SqrlConfigurable implements SqrlGenerateInterface
+class SqrlGenerate implements SqrlGenerateInterface
 {
     /**
      * @var SqrlStore
      */
     protected $store = null;
 
-    protected $_secure = false;
+    protected $nonce = '';
 
-    protected $_domain = '';
-
-    protected $_authPath = '';
-
-    protected $_qrHeight = 300;
-
-    protected $_qrPad = 10;
-
-    protected $_salt = 'asWB^<O]3>H*`a`h_b$XX6r*^6WkNV!;hAgL,X}:#mag"pq)lpUFuj^d5R3i?;X';
-
-    protected $_nonce = '';
-
-    protected $_requestorIP = 0;
-
-    public function getNonce($action = SqrlRequestHandlerInterface::AUTHENTICATION_REQUEST, $key = '')
+    protected $requestorIP = 0;
+    
+    /**
+     *
+     * @var SqrlConfiguration
+     */
+    protected $configuration = null;
+    
+    public function __construct(
+        SqrlConfiguration $config, 
+        SqrlStoreInterface $storage=null
+        )
     {
-        if (empty($this->_nonce)) {
-            $this->_generateNonce($action, $key);
+        $this->configuration = $config;
+        $this->store = $storage;
+    }
+    
+    public function setNonce($nonce,$action = SqrlRequestHandlerInterface::INITIAL_REQUEST, $key = '')
+    {
+        $this->nonce = $nonce;
+        if (!is_null($this->store)) {
+            $this->store->storeNut($this->nonce, $this->requestorIP, $action, $key);
+        }
+    }
+
+    public function getNonce($action = SqrlRequestHandlerInterface::INITIAL_REQUEST, $key = '')
+    {
+        if (empty($this->nonce)) {
+            $this->generateNonce($action, $key);
         }
 
-        return $this->_nonce;
+        return $this->nonce;
     }
 
     public function getUrl()
     {
-        return $this->_buildUrl();
-    }
-
-    public function configure($filePath)
-    {
-        $decoded = $this->loadConfigFromJSON($filePath);
-
-        if (!empty($decoded->secure)) {
-            $this->setSecure($decoded->secure > 0);
-        }
-        if (!empty($decoded->key_domain)) {
-            $this->setKeyDomain($decoded->key_domain);
-        }
-        if (!empty($decoded->authentication_path)) {
-            $this->setAuthenticationPath($decoded->authentication_path);
-        }
-        if (!empty($decoded->height)) {
-            $this->setHeight($decoded->height);
-        }
-        if (!empty($decoded->padding)) {
-            $this->setPadding($decoded->padding);
-        }
-        if (!empty($decoded->nonce_salt)) {
-            $this->setSalt($decoded->nonce_salt);
-        }
+        return $this->buildUrl();
     }
 
     public function setStorage(SqrlStoreInterface $storage)
@@ -100,28 +87,9 @@ class SqrlGenerate extends SqrlConfigurable implements SqrlGenerateInterface
     {
         $qrCode = new QrCode();
         $qrCode->setText($this->getUrl());
-        $qrCode->setSize($this->_qrHeight);
-        $qrCode->setPadding($this->_qrPad);
+        $qrCode->setSize($this->configuration->getQrHeight());
+        $qrCode->setPadding($this->configuration->getQrPadding());
         $qrCode->render($outputFile);
-    }
-
-    public function setHeight($height)
-    {
-        if (is_numeric($height)) {
-            $this->_qrHeight = $height;
-        }
-    }
-
-    public function setPadding($pad)
-    {
-        if (is_numeric($pad)) {
-            $this->_qrPad = $pad;
-        }
-    }
-
-    public function setSalt($salt)
-    {
-        $this->_salt = $salt;
     }
 
     /**
@@ -137,7 +105,7 @@ class SqrlGenerate extends SqrlConfigurable implements SqrlGenerateInterface
         if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
             throw new \InvalidArgumentException('Not a valid IPv4');
         }
-        $this->_requestorIP = ip2long($ip);
+        $this->requestorIP = ip2long($ip);
     }
 
     /**
@@ -156,14 +124,14 @@ class SqrlGenerate extends SqrlConfigurable implements SqrlGenerateInterface
      *
      * @return string
      */
-    protected function _generateNonce($action = SqrlRequestHandlerInterface::AUTHENTICATION_REQUEST, $key = '')
+    protected function generateNonce($action = SqrlRequestHandlerInterface::INITIAL_REQUEST, $key = '')
     {
-        $this->_nonce = hash_hmac('sha256', uniqid('', true), $this->_salt);
+        $this->nonce = hash_hmac('sha256', uniqid('', true), $this->configuration->getNonceSalt());
         if (!is_null($this->store)) {
-            $this->store->storeNut($this->_nonce, $this->_requestorIP, $action, $key);
+            $this->store->storeNut($this->nonce, $this->requestorIP, $action, $key);
         }
 
-        return $this->_nonce;
+        return $this->nonce;
     }
 
     /**
@@ -176,12 +144,12 @@ class SqrlGenerate extends SqrlConfigurable implements SqrlGenerateInterface
      *
      * @return string
      */
-    protected function _buildUrl()
+    protected function buildUrl()
     {
-        $url = ($this->_secure ? 's' : '').'qrl://'.$this->_domain.(strpos(
-                $this->_domain,
-                '/'
-            ) !== false ? '|' : '/').$this->_authPath;
+        $url = ($this->configuration->getSecure() ? 's' : '').'qrl://'
+                .$this->configuration->getDomain()
+                .(strpos($this->configuration->getDomain(),'/') !== false ? '|' : '/')
+                .$this->configuration->getAuthenticationPath();
         $currentPathParts = parse_url($url);
         if (!empty($currentPathParts['query'])) {
             $pathAppend = '&nut=';
@@ -192,18 +160,4 @@ class SqrlGenerate extends SqrlConfigurable implements SqrlGenerateInterface
         return $url.$pathAppend.$this->getNonce();
     }
 
-    public function setAuthenticationPath($path)
-    {
-        $this->_authPath = $path;
-    }
-
-    public function setKeyDomain($domain)
-    {
-        $this->_domain = $domain;
-    }
-
-    public function setSecure($sec)
-    {
-        $this->_secure = (bool) $sec;
-    }
 }

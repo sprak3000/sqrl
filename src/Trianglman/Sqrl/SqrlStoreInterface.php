@@ -71,29 +71,11 @@ interface SqrlStoreInterface
      * The verify unlock key in the public key table
      */
     const VUK = 64;
-
+    
     /**
-     * Loads a configuration file from the supplied path
-     *
-     * @param string $filePath Path to a JSON formatted configuration file
-     *
-     * @return void
-     *
-     * @throws \InvalidArgumentException If the file does not exist
-     * @throws \InvalidArgumentException If the file is not JSON formatted
+     * Whether a nonce has been verified
      */
-    public function configure($filePath);
-
-    /**
-     * Sets the database configuration
-     *
-     * @param string $dsn      A \PDO recognized database dsn
-     * @param string $username [Optional] The user name to connect to the db with
-     * @param string $pass     [Optional] The password to connect to the datbase with
-     *
-     * @return void
-     */
-    public function configureDatabase($dsn, $username = '', $pass = '');
+    const VERIFIED = 256;
 
     /**
      * Directly set the database connection rather than letting SqrlStore create one
@@ -103,24 +85,6 @@ interface SqrlStoreInterface
      * @return void
      */
     public function setDatabaseConnection(\PDO $db);
-
-    /**
-     * Sets the table name of the authentication key information
-     *
-     * @param string $table The table name
-     *
-     * @return void
-     */
-    public function setPublicKeyTable($table);
-
-    /**
-     * Sets the table name of the nut information
-     *
-     * @param string $table The table name
-     *
-     * @return void
-     */
-    public function setNonceTable($table);
 
     /**
      * Stores a nonce and the related information
@@ -137,7 +101,7 @@ interface SqrlStoreInterface
      *
      * @throws SqrlException If there is a database issue
      */
-    public function storeNut($nut, $ip, $type = SqrlRequestHandlerInterface::AUTHENTICATION_REQUEST, $key = null);
+    public function storeNut($nut, $ip, $type = SqrlRequestHandlerInterface::INITIAL_REQUEST, $key = null);
 
     /**
      * Retrieves information about the supplied nut

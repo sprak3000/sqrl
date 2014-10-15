@@ -1,4 +1,5 @@
 <?php
+
 /*
  * The MIT License (MIT)
  * 
@@ -21,28 +22,22 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-namespace Trianglman\Sqrl;
+
+namespace Trianglman\Sqrl\Tests\Resources;
+
+use Trianglman\Sqrl\NonceValidatorInterface;
 
 /**
- * Abstract class for common functionality
+ * A signature validator that will always return true
+ * 
+ * To be used when testing but not caring about the signatures being correct
  *
- * @author luisc
+ * @author johnj
  */
-abstract class SqrlConfigurable
+class AlwaysTrueSignatureValidator implements NonceValidatorInterface
 {
-    abstract public function configure($filePath);
-
-    protected function loadConfigFromJSON($filePath)
+    public function validateSignature($orig, $sig, $pk)
     {
-        if (!file_exists($filePath)) {
-            throw new \InvalidArgumentException('Configuration file not found');
-        }
-        $data = file_get_contents($filePath);
-        $decoded = json_decode($data);
-        if (is_null($decoded)) {
-            throw new \InvalidArgumentException('Configuration data could not be parsed. Is it JSON formatted?');
-        }
-
-        return $decoded;
+        return true;
     }
 }

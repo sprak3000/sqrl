@@ -1,4 +1,5 @@
 <?php
+
 /*
  * The MIT License (MIT)
  * 
@@ -21,21 +22,23 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 namespace Trianglman\Sqrl;
 
 /**
- * A wrapper around the PHP implementation of the ED25519 signature validation code to match the NonceValidator interface
+ * Nonce validator class that uses the ec_* elliptic curve validation code
  *
  * @author johnj
  */
-class Ed25519NonceValidator extends Ed25519\Crypto implements NonceValidatorInterface
+class EcEd25519NonceValidator implements NonceValidatorInterface
 {
     public function validateSignature($orig, $sig, $pk)
     {
-        //return true;//use this to speed up testing of valid keys
-        $check = $this->checkvalid($sig, $orig, $pk);
-        if(!$check){
-            var_dump($orig, base64_encode($pk), base64_encode($sig));
+        $check = ec_verify($sig, $orig, $pk, EC_ED25519);
+        if(!$check) {
+            var_dump($orig);
+            var_dump(base64_encode($sig));
+            var_dump(base64_encode($pk));
         }
         return $check;
     }

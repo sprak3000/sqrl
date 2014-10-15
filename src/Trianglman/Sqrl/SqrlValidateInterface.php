@@ -35,18 +35,6 @@ namespace Trianglman\Sqrl;
 interface SqrlValidateInterface
 {
     /**
-     * Loads a configuration file from the supplied path
-     *
-     * @param string $filePath Path to a JSON formatted configuration file
-     *
-     * @return void
-     *
-     * @throws \InvalidArgumentException If the file does not exist
-     * @throws \InvalidArgumentException If the file is not JSON formatted
-     */
-    public function configure($filePath);
-
-    /**
      * Sets an object to be used to store and retrieve SQRL information
      *
      * @param SqrlStoreInterface $storage
@@ -74,13 +62,13 @@ interface SqrlValidateInterface
     public function setAuthenticateSignature($sig);
 
     /**
-     * Sets the URL that was signed by the key(s)
+     * Sets the server data that was signed by the key(s)
      *
-     * @param string $url
+     * @param string $val
      *
      * @return void
      */
-    public function setSignedUrl($url);
+    public function setSignedServerVal($val);
 
     /**
      * Sets the clientval value that was signed by the key(s)
@@ -112,13 +100,16 @@ interface SqrlValidateInterface
     public function setNonce($nonce);
 
     /**
-     * Sets the class that will handle the validation
-     *
-     * @param NonceValidatorInterface $validator
-     *
-     * @return void
+     * Verifies that the server data sent back by the requestor matches
+     * the data that was originally sent with the nonce
+     * 
+     * @param int $requestType The request type the nut is claimed to be sent for
+     * @param boolean $https Whether the request was secure
+     * @param string|array $serverData The server= information sent by the client
+     * 
+     * @return boolean
      */
-    public function setValidator(NonceValidatorInterface $validator);
+    public function matchServerData($requestType,$https,$serverData);
 
     /**
      * Validates that the supplied signature matches the public key
@@ -126,24 +117,6 @@ interface SqrlValidateInterface
      * @return boolean
      */
     public function validate();
-
-    /**
-     * Gets the public key parsed from the request
-     *
-     * @return string
-     *
-     * @throws \RuntimeException if no request information has been parsed
-     */
-    public function getPublicKey();
-
-    /**
-     * Gets the nonce being returned in the request
-     *
-     * @return string
-     *
-     * @throws \RuntimeException if no request information has been parsed
-     */
-    public function getNonce();
 
     /**
      * Sets whether to enforce the same IP check

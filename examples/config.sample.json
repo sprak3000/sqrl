@@ -4,15 +4,17 @@
     "key_domain":"domain.com",
     "authentication_path":"login/sqrlauth.php",
     "friendly_name":"Example Server",
+    "allow_anonymous_accounts":0,
             
-    "dsn":"sqlite:/tmp/sqrl_test_db.db",
+    "dsn":"mysql:host=localhost;dbname=sqrl",
+    "username":"foo",
+    "password":"bar",
     "nonce_table":"sqrl_nonce",
-    "nonce_relationship_table":"sqrl_nonce_relationship",
     "pubkey_table":"sqrl_pubkey",
     
     "nonce_max_age":"5",
     
-    "height":"30",
-    "padding":"1",
-    "nonce_salt":"testdata"
+    "height":"300",
+    "padding":"10",
+    "nonce_salt":"replace this with some unique random data"
 }
